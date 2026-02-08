@@ -1,1 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey to STEAM - AI Chatbot MVP</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
 
+        :root {
+            --primary: #2D5AA0;
+            --primary-dark: #1E3A8A;
+            --accent: #FF6B35;
+            --accent-dark: #E55A2B;
+            --light: #F8FAFC;
+            --dark: #1E293B;
+            --gray: #64748B;
+            --gray-light: #E2E8F0;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+            --radius-sm: 6px;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-height: 90vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .brand p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            background: var(--success);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            min-height: 800px;
+        }
+
+        /* Chat Widget */
+        .chat-section {
+            padding: 24px;
+            border-right: 1px solid var(--gray-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            margin-bottom: 24px;
+        }
+
+        .chat-header h2 {
+            color: var(--dark);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .chat-header p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 20px;
+            position: relative;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant {
+            background: white;
+            color: var(--dark);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .message.system {
+            background: var(--gray-light);
+            color: var(--gray);
+            align-self: center;
+            font-size: 12px;
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: var(--radius);
+            align-self: flex-start;
+            box-shadow: var(--shadow);
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--gray);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .input-area button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-area button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .input-area button:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Admin Dashboard */
+        .dashboard-section {
+            padding: 24px;
+            background: var(--light);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-header h2 {
+            color: var(--dark);
+            font-size: 20px;
+        }
+
+        .logout-btn {
+            background: var(--gray-light);
+            color: var(--dark);
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: var(--gray);
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-card .trend {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 4px;
+        }
+
+        /* Conversation List */
+        .conversation-list {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .conversation-header {
+            padding: 16px 20px;
+            background: var(--light);
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .conversation-header h3 {
+            color: var(--dark);
+            font-size: 16px;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .conversations {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .conversation-item:hover {
+            background: var(--light);
+        }
+
+        .conversation-item.active {
+            background: var(--primary-light);
+            border-left: 3px solid var(--primary);
+        }
+
+        .conversation-item .time {
+            font-size: 12px;
+            color: var(--gray);
+            margin-bottom: 4px;
+        }
+
+        .conversation-item .preview {
+            font-size: 14px;
+            color: var(--dark);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .conversation-item .channel {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--gray-light);
+            border-radius: 10px;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .conversation-item .channel.web { background: #DBEAFE; color: #1E40AF; }
+        .conversation-item .channel.sms { background: #D1FAE5; color: #065F46; }
+
+        /* Lead Capture */
+        .lead-capture {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        .lead-capture h3 {
+            color: var(--dark);
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .lead-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .lead-form input,
+        .lead-form select {
+            padding: 10px 12px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .lead-form input:focus,
+        .lead-form select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .capture-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .capture-btn:hover {
+            background: var(--accent-dark);
+        }
+
+        /* SMS Section */
+        .sms-section {
+            margin-top: 24px;
+            padding: 24px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .sms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sms-header h3 {
+            color: var(--dark);
+            font-size: 18px;
+        }
+
+        .sms-test {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .sms-test input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+        }
+
+        .sms-test button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .sms-status {
+            background: var(--light);
+            padding: 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+
+        .sms-status.success {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .sms-status.error {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: var(--radius);
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: var(--dark);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .login-form input {
+            padding: 12px 16px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+        }
+
+        .login-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-section {
+                border-right: none;
+                border-bottom: 1px solid var(--gray-light);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo">STEAM</div>
+                <div class="brand">
+                    <h1>Journey to STEAM</h1>
+                    <p>AI Chatbot MVP - Parent Inquiry System</p>
+                </div>
+            </div>
+            <div class="status-badge">System Online</div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left: Chat Widget -->
+            <section class="chat-section">
+                <div class="chat-header">
+                    <h2>Parent Chat Assistant</h2>
+                    <p>Ask about our programs, schedule, pricing, and policies</p>
+                </div>
+                
+                <div class="chat-container">
+                    <div class="messages" id="messages">
+                        <div class="message system">
+                            Welcome! I'm STEAMBot, your AI assistant for Journey to STEAM. How can I help you today?
+                        </div>
+                    </div>
+                    
+                    <div class="input-area">
+                        <input 
+                            type="text" 
+                            id="userInput" 
+                            placeholder="Type your question about programs, pricing, or schedule..."
+                            onkeypress="handleKeyPress(event)"
+                        >
+                        <button id="sendButton" onclick="sendMessage()">
+                            <span>Send</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right: Admin Dashboard -->
+            <section class="dashboard-section" id="dashboardSection">
+                <div class="dashboard-header">
+                    <h2>Admin Dashboard</h2>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Today's Conversations</h3>
+                        <div class="value" id="convoCount">24</div>
+                        <div class="trend">↑ 12% from yesterday</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Leads Captured</h3>
+                        <div class="value" id="leadCount">8</div>
+                        <div class="trend">↑ 3 this week</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg Response Time</h3>
+                        <div class="value">1.2s</div>
+                        <div class="trend">↓ 0.3s faster</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Escalations</h3>
+                        <div class="value">2</div>
+                        <div class="trend">↓ 60% lower</div>
+                    </div>
+                </div>
+
+                <!-- Conversation List -->
+                <div class="conversation-list">
+                    <div class="conversation-header">
+                        <h3>Recent Conversations</h3>
+                        <button class="refresh-btn" onclick="refreshConversations()">
+                            <span>⟳</span> Refresh
+                        </button>
+                    </div>
+                    <div class="conversations" id="conversationList">
+                        <!-- Conversations will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Lead Capture -->
+                <div class="lead-capture">
+                    <h3>Capture Lead</h3>
+                    <div class="lead-form">
+                        <input type="text" id="leadName" placeholder="Parent Name">
+                        <input type="email" id="leadEmail" placeholder="Email Address">
+                        <input type="tel" id="leadPhone" placeholder="Phone Number">
+                        <select id="leadProgram">
+                            <option value="">Select Program Interest</option>
+                            <option value="robotics">Robotics Engineering</option>
+                            <option value="coding">Coding & Game Dev</option>
+                            <option value="science">Science Experiments</option>
+                            <option value="math">Math Enrichment</option>
+                        </select>
+                        <button class="capture-btn" onclick="captureLead()">Capture Lead</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- SMS Section -->
+        <section class="sms-section">
+            <div class="sms-header">
+                <h3>SMS Integration Test</h3>
+                <div class="sms-status success" id="smsStatus">
+                    ✓ Twilio Connected: +1 (555) 123-4567
+                </div>
+            </div>
+            <div class="sms-test">
+                <input 
+                    type="tel" 
+                    id="smsNumber" 
+                    placeholder="Enter phone number to test SMS"
+                    value="+15551234567"
+                >
+                <button onclick="sendTestSMS()">Send Test SMS</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Admin Login</h3>
+                <p>Enter credentials to access dashboard</p>
+            </div>
+            <div class="login-form">
+                <input type="text" id="username" placeholder="Username" value="admin">
+                <input type="password" id="password" placeholder="Password" value="password123">
+                <button class="login-btn" onclick="login()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            isLoggedIn: false,
+            conversations: [],
+            messages: [],
+            currentConversationId: null,
+            knowledgeBase: {
+                programs: [
+                    { id: 'robotics', name: 'Robotics Engineering', age: '8-12', price: '$120/month', schedule: 'Mon/Wed 4-5:30 PM' },
+                    { id: 'coding', name: 'Coding & Game Dev', age: '10-14', price: '$110/month', schedule: 'Tue/Thu 4-5:30 PM' },
+                    { id: 'science', name: 'Science Experiments', age: '6-10', price: '$100/month', schedule: 'Sat 9-11 AM' },
+                    { id: 'math', name: 'Math Enrichment', age: '7-12', price: '$90/month', schedule: 'Fri 4-5:30 PM' }
+                ],
+                faqs: [
+                    { q: 'What ages do you serve?', a: 'We serve children ages 6-14 with age-appropriate programs.' },
+                    { q: 'Do you offer trial classes?', a: 'Yes! We offer one free trial class for all new students.' },
+                    { q: 'What is your cancellation policy?', a: 'Cancellations require 24-hour notice for rescheduling.' },
+                    { q: 'Are materials provided?', a: 'All materials are provided for in-class activities.' }
+                ]
+            },
+            guardrails: [
+                "NEVER confirm enrollment - direct to website registration",
+                "NEVER process payments - provide pricing but direct to website",
+                "NEVER give medical advice - direct to contact center",
+                "ALWAYS escalate to human if uncertain"
+            ]
+        };
+
+        // DOM Elements
+        const messagesEl = document.getElementById('messages');
+        const userInputEl = document.getElementById('userInput');
+        const sendButtonEl = document.getElementById('sendButton');
+        const dashboardSectionEl = document.getElementById('dashboardSection');
+        const loginModalEl = document.getElementById('loginModal');
+        const conversationListEl = document.getElementById('conversationList');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadSampleConversations();
+            simulateConversations();
+            updateStats();
+        });
+
+        // Authentication
+        function checkAuth() {
+            state.isLoggedIn = localStorage.getItem('steamChatAdmin') === 'true';
+            if (state.isLoggedIn) {
+                dashboardSectionEl.style.display = 'flex';
+                loginModalEl.classList.remove('active');
+            } else {
+                dashboardSectionEl.style.display = 'none';
+                loginModalEl.classList.add('active');
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple authentication - in production, this would be server-side
+            if (username === 'admin' && password === 'password123') {
+                state.isLoggedIn = true;
+                localStorage.setItem('steamChatAdmin', 'true');
+                checkAuth();
+                showNotification('Login successful!', 'success');
+            } else {
+                showNotification('Invalid credentials', 'error');
+            }
+        }
+
+        function logout() {
+            state.isLoggedIn = false;
+            localStorage.removeItem('steamChatAdmin');
+            checkAuth();
+            showNotification('Logged out successfully', 'success');
+        }
+
+        // Chat Functions
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const message = userInputEl.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            userInputEl.value = '';
+            
+            // Disable input while processing
+            sendButtonEl.disabled = true;
+            userInputEl.disabled = true;
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Simulate AI processing delay
+            setTimeout(() => {
+                removeTypingIndicator();
+                const response = generateAIResponse(message);
+                addMessage(response, 'assistant');
+                
+                // Re-enable input
+                sendButtonEl.disabled = false;
+                userInputEl.disabled = false;
+                userInputEl.focus();
+
+                // Log conversation
+                logConversation(message, response);
+                updateStats();
+            }, 1500 + Math.random() * 1000);
+        }
+
+        function addMessage(text, role) {
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${role}`;
+            messageEl.textContent = text;
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            
+            state.messages.push({ text, role, timestamp: new Date() });
+        }
+
+        function showTypingIndicator() {
+            const typingEl = document.createElement('div');
+            typingEl.className = 'typing-indicator';
+            typingEl.id = 'typingIndicator';
+            typingEl.innerHTML = '<span></span><span></span><span></span>';
+            messagesEl.appendChild(typingEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingEl = document.getElementById('typingIndicator');
+            if (typingEl) {
+                typingEl.remove();
+            }
+        }
+
+        // AI Response Generation
+        function generateAIResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            // Check for guardrail violations
+            if (message.includes('enroll') || message.includes('sign up') || message.includes('register')) {
+                return "I can provide information about our programs and schedule. To enroll, please visit our website at journeytosteam.com/register or call us at (555) 123-4567 for assistance.";
+            }
+            
+            if (message.includes('pay') || message.includes('payment') || message.includes('credit card')) {
+                return "I can share our pricing information. For payment processing and registration, please visit our secure portal at journeytosteam.com/enroll or contact our office for assistance.";
+            }
+            
+            if (message.includes('sick') || message.includes('medicine') || message.includes('allergy')) {
+                return "For any medical concerns, allergies, or health-related questions, please contact our center director directly at (555) 123-4567. They can provide appropriate guidance for your child's needs.";
+            }
+            
+            // Check for program information
+            for (const program of state.knowledgeBase.programs) {
+                if (message.includes(program.id) || message.includes(program.name.toLowerCase())) {
+                    return `${program.name}:\n• Ages: ${program.age}\n• Price: ${program.price}\n• Schedule: ${program.schedule}\n\nWould you like information about our other programs or a free trial class?`;
+                }
+            }
+            
+            // Check for FAQs
+            for (const faq of state.knowledgeBase.faqs) {
+                if (message.includes(faq.q.toLowerCase().split(' ')[0])) {
+                    return faq.a;
+                }
+            }
+            
+            // General responses
+            if (message.includes('hello') || message.includes('hi')) {
+                return "Hello! I'm STEAMBot, your assistant for Journey to STEAM. I can help with program information, schedules, pricing, and policies. What would you like to know about?";
+            }
+            
+            if (message.includes('price') || message.includes('cost')) {
+                return "Our programs range from $90-$120 per month. Here's a breakdown:\n• Robotics: $120/month\n• Coding: $110/month\n• Science: $100/month\n• Math: $90/month\n\nAll prices include materials. Would you like details about a specific program?";
+            }
+            
+            if (message.includes('time') || message.includes('hour') || message.includes('schedule')) {
+                return "Our regular class hours are:\nWeekdays: 3-6 PM\nSaturdays: 9 AM-12 PM\n\nSpecific program schedules:\n• Robotics: Mon/Wed 4-5:30 PM\n• Coding: Tue/Thu 4-5:30 PM\n• Science: Sat 9-11 AM\n• Math: Fri 4-5:30 PM";
+            }
+            
+            if (message.includes('location') || message.includes('address')) {
+                return "We're located at:\n123 Innovation Drive\nTech City, STEAM 12345\n\nParking is available in the rear lot. Would you like directions or information about our facility?";
+            }
+            
+            if (message.includes('age') || message.includes('old')) {
+                return "We serve children ages 6-14. Our programs are grouped by age and skill level:\n• Ages 6-10: Science Experiments, Math Enrichment\n• Ages 8-12: Robotics Engineering\n• Ages 10-14: Coding & Game Development\n\nWhich age group are you interested in?";
+            }
+            
+            // Default response with escalation option
+            return "I understand you're asking about: '" + userMessage + "'. I want to make sure I give you accurate information. Could you provide more details, or would you prefer to speak with our center director for specific questions? You can reach them at (555) 123-4567 during business hours.";
+        }
+
+        // Conversation Logging
+        function logConversation(userMessage, aiResponse) {
+            const conversation = {
+                id: 'conv-' + Date.now(),
+                userMessage,
+                aiResponse,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                channel: 'web',
+                leadCaptured: false
+            };
+            
+            state.conversations.unshift(conversation);
+            updateConversationList();
+        }
+
+        // Dashboard Functions
+        function refreshConversations() {
+            simulateConversations();
+            updateConversationList();
+            showNotification('Conversations refreshed', 'success');
+        }
+
+        function updateConversationList() {
+            conversationListEl.innerHTML = '';
+            
+            state.conversations.slice(0, 5).forEach(conv => {
+                const item = document.createElement('div');
+                item.className = 'conversation-item';
+                item.innerHTML = `
+                    <div class="time">${conv.timestamp}</div>
+                    <div class="preview">${conv.userMessage}</div>
+                    <div class="channel ${conv.channel}">${conv.channel.toUpperCase()}</div>
+                `;
+                item.onclick = () => viewConversation(conv.id);
+                conversationListEl.appendChild(item);
+            });
+        }
+
+        function viewConversation(id) {
+            const conv = state.conversations.find(c => c.id === id);
+            if (conv) {
+                alert(`Conversation Details:\n\nUser: ${conv.userMessage}\n\nAI: ${conv.aiResponse}\n\nTime: ${conv.timestamp}\nChannel: ${conv.channel}`);
+            }
+        }
+
+        function captureLead() {
+            const name = document.getElementById('leadName').value.trim();
+            const email = document.getElementById('leadEmail').value.trim();
+            const phone = document.getElementById('leadPhone').value.trim();
+            const program = document.getElementById('leadProgram').value;
+            
+            if (!name || !email || !phone || !program) {
+                showNotification('Please fill all fields', 'error');
+                return;
+            }
+            
+            // In production, this would send to server
+            showNotification(`Lead captured: ${name} - ${email}`, 'success');
+            
+            // Update stats
+            const leadCount = parseInt(document.getElementById('leadCount').textContent);
+            document.getElementById('leadCount').textContent = leadCount + 1;
+            
+            // Clear form
+            document.getElementById('leadName').value = '';
+            document.getElementById('leadEmail').value = '';
+            document.getElementById('leadPhone').value = '';
+            document.getElementById('leadProgram').value = '';
+            
+            // Export simulation (in production would be server-side)
+            setTimeout(() => {
+                const csvContent = `data:text/csv;charset=utf-8,Name,Email,Phone,Program,Timestamp\n${name},${email},${phone},${program},${new Date().toISOString()}`;
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `lead_${Date.now()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showNotification('Lead exported to CSV', 'success');
+            }, 1000);
+        }
+
+        function updateStats() {
+            // Update conversation count
+            const convCount = Math.floor(20 + Math.random() * 10);
+            document.getElementById('convoCount').textContent = convCount;
+            
+            // Update lead count (incremental)
+            const leadEl = document.getElementById('leadCount');
+            let leadCount = parseInt(leadEl.textContent);
+            if (Math.random() > 0.7) { // 30% chance of new lead
+                leadEl.textContent = leadCount + 1;
+            }
+        }
+
+        // SMS Functions
+        function sendTestSMS() {
+            const number = document.getElementById('smsNumber').value.trim();
+            if (!number) {
+                showNotification('Please enter a phone number', 'error');
+                return;
+            }
+            
+            const statusEl = document.getElementById('smsStatus');
+            statusEl.textContent = '✉️ Sending test SMS...';
+            statusEl.className = 'sms-status';
+            
+            // Simulate SMS sending
+            setTimeout(() => {
+                statusEl.textContent = `✓ Test SMS sent to ${number}`;
+                statusEl.className = 'sms-status success';
+                showNotification('Test SMS sent successfully', 'success');
+                
+                // Simulate AI response via SMS
+                setTimeout(() => {
+                    alert(`SMS Response Simulation:\n\nFrom: ${number}\nMessage: "Hi, can you tell me about your robotics program?"\n\nAI Reply: "Our Robotics Engineering program is for ages 8-12, $120/month, Mon/Wed 4-5:30 PM. All materials included. Would you like info about a free trial class?"`);
+                }, 2000);
+            }, 1500);
+        }
+
+        // Utility Functions
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                background: ${type === 'success' ? '#10B981' : '#EF4444'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+            
+            // Add animation styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Sample Data Simulation
+        function loadSampleConversations() {
+            state.conversations = [
+                {
+                    id: 'conv-1',
+                    userMessage: "What's the cost of robotics class?",
+                    aiResponse: "Our Robotics Engineering program is $120/month for ages 8-12, Mon/Wed 4-5:30 PM.",
+                    timestamp: "10:30 AM",
+                    channel: 'web'
+                },
+                {
+                    id: 'conv-2',
+                    userMessage: "Do you have Saturday classes?",
+                    aiResponse: "Yes! Our Science Experiments program runs Saturdays 9-11 AM for ages 6-10.",
+                    timestamp: "09:15 AM",
+                    channel: 'sms'
+                },
+                {
+                    id: 'conv-3',
+                    userMessage: "Can I enroll my 7-year-old?",
+                    aiResponse: "For enrollment, please visit journeytosteam.com/register. For age appropriateness, we have Math Enrichment for ages 7-12.",
+                    timestamp: "Yesterday",
+                    channel: 'web'
+                }
+            ];
+            updateConversationList();
+        }
+
+        function simulateConversations() {
+            // Add some random conversations periodically
+            if (Math.random() > 0.5) {
+                const samples = [
+                    { q: "What time do classes start?", a: "Weekday classes: 3-6 PM, Saturday: 9 AM-12 PM" },
+                    { q: "Is there a trial class?", a: "Yes! One free trial class for all new students." },
+                    { q: "What should my child bring?", a: "Just enthusiasm! All materials are provided." }
+                ];
+                
+                const sample = samples[Math.floor(Math.random() * samples.length)];
+                const conv = {
+                    id: 'conv-' + Date.now(),
+                    userMessage: sample.q,
+                    aiResponse: sample.a,
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    channel: Math.random() > 0.5 ? 'web' : 'sms'
+                };
+                
+                state.conversations.unshift(conv);
+                updateConversationList();
+            }
+        }
+    </script>
+</body>
+</html>
